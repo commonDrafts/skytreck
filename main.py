@@ -69,7 +69,7 @@ async def asynchronous(URL, session, depths=0, regExpPattern='/wiki/.*', parenti
                         tasks = [asyncio.ensure_future(asynchronous(("https://en.wikipedia.org"+i), 
                                                                     session=session, 
                                                                     depths=depths+1, 
-                                                                    parentid=nowid)) for i in hrefs[:3]]
+                                                                    parentid=nowid)) for i in hrefs]
                         await asyncio.wait(tasks)
             
 async def startFetching(URL, conn=CONN):
