@@ -49,8 +49,7 @@ CONN       = aiohttp.TCPConnector(family=socket.AF_INET,
                                     )
 
 # fetching:
-async def asynchronous(URL, session, depths=0, regExpPattern='/wiki/.*', 
-                        parentid=1, max_depths=MAX_DEPTHS, db=DB, sem=SEM):
+async def asynchronous(URL, session, depths=0, regExpPattern='/wiki/.*', parentid=1, max_depths=MAX_DEPTHS, db=DB, sem=SEM):
     if depths <= max_depths:
         nowid = insertPagesTB(URL, depths, db)
         insertRelationsTB(parentid, nowid, db)
@@ -58,18 +57,21 @@ async def asynchronous(URL, session, depths=0, regExpPattern='/wiki/.*',
         async with sem:
             async with session.get(URL) as response:
                 response = await response.read()
-                page = BeautifulSoup(response)
-                for row in page.findAll("a", href=True):
-                    if re.fullmatch(regExpPattern, row["href"]):
-                        hrefs.append(row["href"])
-        tasks = [asyncio.ensure_future(asynchronous(("https://en.wikipedia.org"+i), 
-                session=session, depths=depths+1, parentid=nowid)) for i in hrefs]
-        await asyncio.gather(*tasks)
+                if type(response) == type(None):
+                    pass
+                else:
+                    page = BeautifulSoup(response)
+                    for row in page.findAll("a", href=True):
+                        if re.fullmatch(regExpPattern, row["href"]):
+                            hrefs.append(row["href"])
+                    if len(hrefs) != 0:
+                        tasks = [asyncio.ensure_future(asynchronous(("https://en.wikipedia.org"+i), session=session, depths=depths+1, parentid=nowid)) for i in hrefs[:3]]
+                        await asyncio.wait(tasks)
             
 async def startFetching(URL, conn=CONN):
     async with ClientSession(connector=conn) as session:
         task = [asyncio.ensure_future(asynchronous(URL, session=session))]
-        await asyncio.gather(*task)
+        await asyncio.wait(task)
         
 loop = asyncio.get_event_loop()
 loop.run_until_complete(startFetching(START_URL))
