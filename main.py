@@ -65,12 +65,12 @@ async def asynchronous(URL, session, depths=0, regExpPattern='/wiki/.*', parenti
                     for row in page.findAll("a", href=True):
                         if re.fullmatch(regExpPattern, row["href"]):
                             hrefs.append(row["href"])
-                    if len(hrefs) != 0:
-                        tasks = [asyncio.ensure_future(asynchronous(("https://en.wikipedia.org"+i), 
+        if len(hrefs) != 0:
+            tasks = [asyncio.ensure_future(asynchronous(("https://en.wikipedia.org"+i), 
                                                                     session=session, 
                                                                     depths=depths+1, 
                                                                     parentid=nowid)) for i in hrefs]
-                        await asyncio.wait(tasks)
+            await asyncio.wait(tasks)
             
 async def startFetching(URL, conn=CONN):
     async with ClientSession(connector=conn) as session:
